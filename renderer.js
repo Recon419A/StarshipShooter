@@ -109,6 +109,7 @@ function shoot() {
           color: '#ffff00'
         });
       }
+      sounds.shootShotgun();
     } else if (gameState.powerup === 'laser') {
       // Big laser beam
       bullets.push({
@@ -121,6 +122,7 @@ function shoot() {
         color: '#ff00ff',
         damage: 3
       });
+      sounds.shootLaser();
     } else {
       // Normal bullet
       bullets.push({
@@ -132,6 +134,7 @@ function shoot() {
         height: 8,
         color: '#00ffff'
       });
+      sounds.shoot();
     }
   }
 }
@@ -175,6 +178,7 @@ function shootMissile() {
       height: 10,
       target: null
     });
+    sounds.shootMissile();
   }
 }
 
@@ -391,11 +395,14 @@ function checkCollisions() {
           enemy.dead = true;
           gameState.score += enemy.type.points;
           updateScore();
+          sounds.explosion();
 
           // Random chance to drop powerup
           if (Math.random() < 0.15) {
             spawnPowerup(enemy.x, enemy.y);
           }
+        } else {
+          sounds.enemyHit();
         }
       }
     });
@@ -413,10 +420,13 @@ function checkCollisions() {
           enemy.dead = true;
           gameState.score += enemy.type.points;
           updateScore();
+          sounds.explosion();
 
           if (Math.random() < 0.15) {
             spawnPowerup(enemy.x, enemy.y);
           }
+        } else {
+          sounds.enemyHit();
         }
       }
     });
@@ -432,6 +442,8 @@ function checkCollisions() {
       enemy.dead = true;
       gameState.health -= 1;
       updateHealth();
+      sounds.hit();
+      sounds.explosion();
 
       if (gameState.health <= 0) {
         endGame();
@@ -447,6 +459,7 @@ function checkCollisions() {
         player.y + player.height > powerup.y) {
 
       activatePowerup(powerup.type);
+      sounds.powerup();
       return false;
     }
     return true;
