@@ -1,0 +1,22 @@
+{
+  "name": "starship-shooter",
+  "version": "1.0.0",
+  "description": "A classic space shooter game inspired by early 2000s Flash games",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging"
+  },
+  "keywords": [
+    "game",
+    "space-shooter",
+    "electron",
+    "retro",
+    "arcade"
+  ],
+  "author": "Recon419A",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0"
+  }
+}

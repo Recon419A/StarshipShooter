@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starship Shooter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="game-container">
+    <div id="ui-overlay">
+      <div id="score-display">Score: <span id="score">0</span></div>
+      <div id="health-display">Health: <span id="health">3</span></div>
+      <div id="powerup-display"></div>
+    </div>
+    <canvas id="game-canvas" width="800" height="600"></canvas>
+    <div id="game-over" class="hidden">
+      <h1>GAME OVER</h1>
+      <p>Final Score: <span id="final-score">0</span></p>
+      <button id="restart-button">Play Again</button>
+    </div>
+    <div id="start-screen">
+      <h1>STARSHIP SHOOTER</h1>
+      <div class="instructions">
+        <p>CONTROLS:</p>
+        <p>Arrow Keys or A/D - Move</p>
+        <p>Space - Shoot</p>
+        <p>ESC - Pause</p>
+      </div>
+      <button id="start-button">Start Game</button>
+    </div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>
