@@ -21,6 +21,10 @@ let gameState = {
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
+// Audio setup
+const bgm = document.getElementById('bgm');
+bgm.volume = 0.4; // Set volume to 40%
+
 // Input handling
 const keys = {};
 document.addEventListener('keydown', (e) => {
@@ -33,6 +37,13 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && gameState.running) {
     e.preventDefault();
     gameState.paused = !gameState.paused;
+
+    // Pause/resume music
+    if (gameState.paused) {
+      bgm.pause();
+    } else {
+      bgm.play();
+    }
   }
 });
 
@@ -583,6 +594,10 @@ function startGame() {
   document.getElementById('start-screen').classList.add('hidden');
   document.getElementById('game-over').classList.add('hidden');
 
+  // Start music
+  bgm.currentTime = 0;
+  bgm.play();
+
   lastTime = performance.now();
   requestAnimationFrame(gameLoop);
 }
@@ -591,6 +606,10 @@ function endGame() {
   gameState.running = false;
   document.getElementById('final-score').textContent = gameState.score;
   document.getElementById('game-over').classList.remove('hidden');
+
+  // Stop music
+  bgm.pause();
+  bgm.currentTime = 0;
 }
 
 // Event listeners
