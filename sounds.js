@@ -78,11 +78,31 @@ const sounds = {
     oscillator.stop(now + 0.08);
   },
 
-  // Shotgun spread shot
+  // Shotgun spread shot - chunky burst with multiple frequencies
   shootShotgun: function() {
-    playTone(300, 0.08, 'square', 0.12);
-    setTimeout(() => playTone(320, 0.08, 'square', 0.12), 20);
-    setTimeout(() => playTone(340, 0.08, 'square', 0.12), 40);
+    const now = audioContext.currentTime;
+
+    // Create 5 simultaneous descending tones at different pitches (spread effect)
+    const frequencies = [700, 800, 900, 750, 850];
+    frequencies.forEach((freq, i) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.type = 'square';
+
+      const startTime = now + (i * 0.01); // Slight stagger
+      oscillator.frequency.setValueAtTime(freq, startTime);
+      oscillator.frequency.exponentialRampToValueAtTime(freq * 0.3, startTime + 0.06);
+
+      gainNode.gain.setValueAtTime(0.08, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.06);
+
+      oscillator.start(startTime);
+      oscillator.stop(startTime + 0.06);
+    });
   },
 
   // Laser beam
