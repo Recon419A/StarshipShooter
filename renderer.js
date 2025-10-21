@@ -228,10 +228,32 @@ function drawMissiles() {
   });
 }
 
+// Enemy bullets
+let enemyBullets = [];
+
+function updateEnemyBullets() {
+  enemyBullets = enemyBullets.filter(bullet => {
+    bullet.x += bullet.vx;
+    bullet.y += bullet.vy;
+    return bullet.y < CANVAS_HEIGHT + 10 && bullet.x > -10 && bullet.x < CANVAS_WIDTH + 10;
+  });
+}
+
+function drawEnemyBullets() {
+  enemyBullets.forEach(bullet => {
+    ctx.fillStyle = '#ff6666';
+    ctx.beginPath();
+    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
 // Enemies
 let enemies = [];
 let enemySpawnTimer = 0;
+let minibossSpawnTimer = 0;
 const ENEMY_SPAWN_INTERVAL = 1000; // 1 second
+const MINIBOSS_SPAWN_INTERVAL = 45000; // 45 seconds
 
 const enemyTypes = [
   {
@@ -273,35 +295,217 @@ const enemyTypes = [
         enemy.y += Math.sin(angle) * 4;
       }
     }
+  },
+  {
+    name: 'shooter',
+    color: '#ff8800',
+    health: 2,
+    points: 40,
+    move: (enemy) => {
+      // Descend to mid-screen and stop
+      if (enemy.y < CANVAS_HEIGHT / 2 - 50) {
+        enemy.y += ENEMY_SPEED * 0.7;
+      }
+
+      // Shoot 3-bullet spread at player
+      const now = Date.now();
+      if (!enemy.lastShot || now - enemy.lastShot > 2000) {
+        enemy.lastShot = now;
+
+        const dx = player.x - enemy.x;
+        const dy = player.y - enemy.y;
+        const angle = Math.atan2(dy, dx);
+
+        for (let i = -1; i <= 1; i++) {
+          const spreadAngle = angle + (i * 0.3);
+          enemyBullets.push({
+            x: enemy.x,
+            y: enemy.y,
+            vx: Math.cos(spreadAngle) * 3,
+            vy: Math.sin(spreadAngle) * 3
+          });
+        }
+        sounds.enemyShoot();
+      }
+    }
+  },
+  {
+    name: 'sidewinder',
+    color: '#00ffff',
+    health: 1,
+    points: 35,
+    move: (enemy) => {
+      // Move horizontally based on spawn direction
+      enemy.x += enemy.direction * 3;
+
+      // Shoot downward periodically
+      const now = Date.now();
+      if (!enemy.lastShot || now - enemy.lastShot > 500) {
+        enemy.lastShot = now;
+        enemyBullets.push({
+          x: enemy.x,
+          y: enemy.y,
+          vx: 0,
+          vy: 4
+        });
+        sounds.enemyShoot();
+      }
+    }
+  },
+  {
+    name: 'orbiter',
+    color: '#ff00aa',
+    health: 2,
+    points: 50,
+    move: (enemy) => {
+      // Initialize orbit center if not set
+      if (!enemy.orbitCenter) {
+        enemy.orbitCenter = { x: enemy.x, y: enemy.y };
+        enemy.orbitAngle = 0;
+        enemy.orbitRadius = 40;
+      }
+
+      // Orbit around center point
+      enemy.orbitAngle += 0.05;
+      enemy.x = enemy.orbitCenter.x + Math.cos(enemy.orbitAngle) * enemy.orbitRadius;
+      enemy.y = enemy.orbitCenter.y + Math.sin(enemy.orbitAngle) * enemy.orbitRadius;
+
+      // Shoot radially outward in 4 directions
+      const now = Date.now();
+      if (!enemy.lastShot || now - enemy.lastShot > 1500) {
+        enemy.lastShot = now;
+
+        for (let i = 0; i < 4; i++) {
+          const angle = (Math.PI / 2) * i;
+          enemyBullets.push({
+            x: enemy.x,
+            y: enemy.y,
+            vx: Math.cos(angle) * 3,
+            vy: Math.sin(angle) * 3
+          });
+        }
+        sounds.enemyShoot();
+      }
+    }
   }
 ];
 
 function spawnEnemy() {
   const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+
+  let x, y, direction;
+
+  // Sidewinders spawn from left or right edge
+  if (type.name === 'sidewinder') {
+    direction = Math.random() < 0.5 ? 1 : -1;
+    x = direction > 0 ? -20 : CANVAS_WIDTH + 20;
+    y = Math.random() * (CANVAS_HEIGHT / 2) + 50;
+  } else {
+    x = Math.random() * (CANVAS_WIDTH - 30) + 15;
+    y = -20;
+    direction = 0;
+  }
+
   enemies.push({
-    x: Math.random() * (CANVAS_WIDTH - 30) + 15,
-    y: -20,
+    x: x,
+    y: y,
     width: 15,
     height: 15,
     type: type,
     health: type.health,
     maxHealth: type.health,
-    diving: false
+    diving: false,
+    direction: direction
+  });
+}
+
+// Guardian miniboss type
+const guardianType = {
+  name: 'guardian',
+  color: '#8800ff',
+  health: 20,
+  points: 200,
+  move: (enemy) => {
+    // Move to top third of screen
+    if (enemy.y < CANVAS_HEIGHT / 3) {
+      enemy.y += 1;
+    }
+
+    // Slow left-right movement
+    if (!enemy.moveDir) enemy.moveDir = 1;
+    enemy.x += enemy.moveDir * 1.5;
+
+    if (enemy.x < 50 || enemy.x > CANVAS_WIDTH - 50) {
+      enemy.moveDir *= -1;
+    }
+
+    const now = Date.now();
+
+    // Laser beams from sides (every 4 seconds)
+    if (!enemy.lastLaser || now - enemy.lastLaser > 4000) {
+      enemy.lastLaser = now;
+      enemy.laserActive = true;
+      enemy.laserStartTime = now;
+    }
+
+    // Deactivate laser after 2 seconds
+    if (enemy.laserActive && now - enemy.laserStartTime > 2000) {
+      enemy.laserActive = false;
+    }
+
+    // Bullet spread (every 3 seconds)
+    if (!enemy.lastSpread || now - enemy.lastSpread > 3000) {
+      enemy.lastSpread = now;
+
+      for (let i = -2; i <= 2; i++) {
+        const angle = Math.PI / 2 + (i * 0.4);
+        enemyBullets.push({
+          x: enemy.x,
+          y: enemy.y + enemy.height / 2,
+          vx: Math.cos(angle) * 3.5,
+          vy: Math.sin(angle) * 3.5
+        });
+      }
+      sounds.enemyShoot();
+    }
+  }
+};
+
+function spawnGuardian() {
+  enemies.push({
+    x: CANVAS_WIDTH / 2,
+    y: -50,
+    width: 40,
+    height: 40,
+    type: guardianType,
+    health: guardianType.health,
+    maxHealth: guardianType.health,
+    isMiniboss: true,
+    moveDir: 1
   });
 }
 
 function updateEnemies(deltaTime) {
   enemySpawnTimer += deltaTime;
+  minibossSpawnTimer += deltaTime;
 
   if (enemySpawnTimer > ENEMY_SPAWN_INTERVAL) {
     spawnEnemy();
     enemySpawnTimer = 0;
   }
 
+  if (minibossSpawnTimer > MINIBOSS_SPAWN_INTERVAL) {
+    spawnGuardian();
+    minibossSpawnTimer = 0;
+  }
+
   enemies = enemies.filter(enemy => {
     if (enemy.dead) return false;
 
     enemy.type.move(enemy);
+
+    // Don't remove minibosses off-screen
+    if (enemy.isMiniboss) return true;
 
     // Remove if off screen
     if (enemy.y > CANVAS_HEIGHT + 20 || enemy.x < -20 || enemy.x > CANVAS_WIDTH + 20) {
@@ -314,21 +518,40 @@ function updateEnemies(deltaTime) {
 
 function drawEnemies() {
   enemies.forEach(enemy => {
-    ctx.fillStyle = enemy.type.color;
-    ctx.beginPath();
-    ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, Math.PI * 2);
-    ctx.fill();
+    // Draw Guardian lasers
+    if (enemy.type.name === 'guardian' && enemy.laserActive) {
+      ctx.fillStyle = 'rgba(255, 0, 255, 0.5)';
+      ctx.fillRect(0, enemy.y - 5, 50, 10); // Left laser
+      ctx.fillRect(CANVAS_WIDTH - 50, enemy.y - 5, 50, 10); // Right laser
+
+      ctx.fillStyle = '#ff00ff';
+      ctx.fillRect(0, enemy.y - 2, 50, 4); // Left laser core
+      ctx.fillRect(CANVAS_WIDTH - 50, enemy.y - 2, 50, 4); // Right laser core
+    }
+
+    // Draw enemy body
+    if (enemy.isMiniboss) {
+      // Draw Guardian as rectangle
+      ctx.fillStyle = enemy.type.color;
+      ctx.fillRect(enemy.x - enemy.width / 2, enemy.y - enemy.height / 2, enemy.width, enemy.height);
+    } else {
+      // Draw regular enemies as circles
+      ctx.fillStyle = enemy.type.color;
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, enemy.width / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Draw health bar for enemies with more than 1 health
     if (enemy.maxHealth > 1) {
-      const healthBarWidth = 20;
+      const healthBarWidth = enemy.isMiniboss ? 40 : 20;
       const healthBarHeight = 3;
       const healthPercent = enemy.health / enemy.maxHealth;
 
       ctx.fillStyle = '#ff0000';
-      ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - 15, healthBarWidth, healthBarHeight);
+      ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - (enemy.height / 2) - 10, healthBarWidth, healthBarHeight);
       ctx.fillStyle = '#00ff00';
-      ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - 15, healthBarWidth * healthPercent, healthBarHeight);
+      ctx.fillRect(enemy.x - healthBarWidth / 2, enemy.y - (enemy.height / 2) - 10, healthBarWidth * healthPercent, healthBarHeight);
     }
   });
 }
@@ -464,6 +687,47 @@ function checkCollisions() {
     }
     return true;
   });
+
+  // Enemy bullets vs player
+  enemyBullets.forEach((bullet, bulletIndex) => {
+    if (player.x < bullet.x + 3 &&
+        player.x + player.width > bullet.x - 3 &&
+        player.y < bullet.y + 3 &&
+        player.y + player.height > bullet.y - 3) {
+
+      enemyBullets.splice(bulletIndex, 1);
+      gameState.health -= 1;
+      updateHealth();
+      sounds.hit();
+
+      if (gameState.health <= 0) {
+        endGame();
+      }
+    }
+  });
+
+  // Guardian lasers vs player
+  enemies.forEach(enemy => {
+    if (enemy.type.name === 'guardian' && enemy.laserActive) {
+      // Check if player is in laser zones (left or right 50px)
+      const inLeftLaser = player.x < 50 && player.x + player.width > 0;
+      const inRightLaser = player.x < CANVAS_WIDTH && player.x + player.width > CANVAS_WIDTH - 50;
+      const inLaserHeight = player.y < enemy.y + 5 && player.y + player.height > enemy.y - 5;
+
+      if ((inLeftLaser || inRightLaser) && inLaserHeight) {
+        if (!player.laserHitCooldown || Date.now() - player.laserHitCooldown > 500) {
+          player.laserHitCooldown = Date.now();
+          gameState.health -= 1;
+          updateHealth();
+          sounds.hit();
+
+          if (gameState.health <= 0) {
+            endGame();
+          }
+        }
+      }
+    }
+  });
 }
 
 function activatePowerup(type) {
@@ -509,6 +773,7 @@ function gameLoop(currentTime) {
     player.update();
     updateBullets();
     updateMissiles();
+    updateEnemyBullets();
     updateEnemies(deltaTime);
     updatePowerups();
     checkCollisions();
@@ -543,6 +808,7 @@ function gameLoop(currentTime) {
     drawEnemies();
     drawBullets();
     drawMissiles();
+    drawEnemyBullets();
     drawPowerups();
     player.draw();
   } else {
@@ -594,8 +860,10 @@ function startGame() {
   bullets = [];
   missiles = [];
   enemies = [];
+  enemyBullets = [];
   powerups = [];
   enemySpawnTimer = 0;
+  minibossSpawnTimer = 0;
 
   player.x = CANVAS_WIDTH / 2;
   player.y = CANVAS_HEIGHT - 50;

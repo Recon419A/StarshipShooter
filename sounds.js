@@ -174,6 +174,11 @@ const sounds = {
   // Enemy hit (not destroyed)
   enemyHit: function() {
     playTone(300, 0.05, 'square', 0.1);
+  },
+
+  // Enemy shoot sound - lower pitch to distinguish from player
+  enemyShoot: function() {
+    playTone(250, 0.06, 'triangle', 0.08);
   }
 };
 
