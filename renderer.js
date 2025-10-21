@@ -32,8 +32,11 @@ let gameState = {
   powerup: null,
   powerupTimer: 0,
   shopOpen: false,
-  nextShopScore: 500
+  nextShopScore: 2500  // Shop appears much less frequently
 };
+
+// Shop station
+let shopStation = null;
 
 // Canvas setup
 const canvas = document.getElementById('game-canvas');
@@ -1202,6 +1205,69 @@ function drawScrapPickups() {
   });
 }
 
+// Shop station
+function spawnShopStation() {
+  shopStation = {
+    x: CANVAS_WIDTH / 2,
+    y: -60,
+    width: 50,
+    height: 50,
+    vy: 1.5
+  };
+}
+
+function updateShopStation() {
+  if (!shopStation) return;
+
+  shopStation.y += shopStation.vy;
+
+  // Remove if off screen
+  if (shopStation.y > CANVAS_HEIGHT + 60) {
+    shopStation = null;
+  }
+}
+
+function drawShopStation() {
+  if (!shopStation) return;
+
+  const x = shopStation.x;
+  const y = shopStation.y;
+  const w = shopStation.width;
+  const h = shopStation.height;
+
+  // Draw space station structure
+  // Main platform
+  ctx.fillStyle = '#00aaaa';
+  ctx.fillRect(x - w/2, y - h/4, w, h/2);
+
+  // Docking bay (opening)
+  ctx.fillStyle = '#004444';
+  ctx.fillRect(x - w/3, y - h/6, w * 2/3, h/3);
+
+  // Antenna/towers
+  ctx.fillStyle = '#00cccc';
+  ctx.fillRect(x - w/2 - 3, y - h/2, 3, h);
+  ctx.fillRect(x + w/2, y - h/2, 3, h);
+
+  // Lights
+  ctx.fillStyle = '#00ff00';
+  ctx.fillRect(x - w/4, y - h/4 - 2, 4, 4);
+  ctx.fillRect(x + w/4 - 4, y - h/4 - 2, 4, 4);
+
+  // Blinking shop indicator
+  if (Math.floor(Date.now() / 500) % 2 === 0) {
+    ctx.fillStyle = '#ffff00';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SHOP', x, y - h/2 - 8);
+  }
+
+  // Glow effect
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x - w/2 - 2, y - h/2 - 2, w + 4, h + 4);
+}
+
 // Collision detection
 function checkCollisions() {
   // Bullets vs enemies
@@ -1308,6 +1374,19 @@ function checkCollisions() {
     }
     return true;
   });
+
+  // Player vs shop station
+  if (shopStation) {
+    if (player.x < shopStation.x + shopStation.width / 2 &&
+        player.x + player.width > shopStation.x - shopStation.width / 2 &&
+        player.y < shopStation.y + shopStation.height / 2 &&
+        player.y + player.height > shopStation.y - shopStation.height / 2) {
+
+      shopStation = null; // Remove station
+      openShop();
+      sounds.powerup(); // Docking sound
+    }
+  }
 
   // CIWS bullets vs enemy bullets
   ciwsBullets.forEach((ciwsBullet, ciwsIndex) => {
@@ -1457,6 +1536,7 @@ function gameLoop(currentTime) {
     updateEnemies(deltaTime);
     updatePowerups();
     updateScrapPickups();
+    updateShopStation();
     checkCollisions();
 
     // Update powerup timer
@@ -1469,9 +1549,9 @@ function gameLoop(currentTime) {
       updatePowerupDisplay();
     }
 
-    // Check if shop should open
-    if (gameState.score >= gameState.nextShopScore && !gameState.shopOpen) {
-      openShop();
+    // Spawn shop station when score threshold reached
+    if (gameState.score >= gameState.nextShopScore && !shopStation && !gameState.shopOpen) {
+      spawnShopStation();
     }
 
     // Continuous shooting when spacebar is held
@@ -1499,6 +1579,7 @@ function gameLoop(currentTime) {
     drawCIWS();
     drawPowerups();
     drawScrapPickups();
+    drawShopStation();
     player.draw();
   } else {
     // Draw pause text
@@ -1598,7 +1679,7 @@ function startGame() {
   gameState.powerup = null;
   gameState.powerupTimer = 0;
   gameState.shopOpen = false;
-  gameState.nextShopScore = 500;
+  gameState.nextShopScore = 2500;
 
   bullets = [];
   missiles = [];
@@ -1607,6 +1688,7 @@ function startGame() {
   ciwsBullets = [];
   powerups = [];
   scrapPickups = [];
+  shopStation = null;
   enemySpawnTimer = 0;
   minibossSpawnTimer = 0;
   bossSpawnTimer = 0;
@@ -1660,7 +1742,7 @@ function closeShop() {
   bgm.play();
 
   document.getElementById('shop-screen').classList.add('hidden');
-  gameState.nextShopScore += 500; // Next shop at +500 score
+  gameState.nextShopScore += 2500; // Next shop at +2500 score
 }
 
 function updateShopUI() {
