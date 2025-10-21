@@ -26,9 +26,8 @@ const keys = {};
 document.addEventListener('keydown', (e) => {
   keys[e.key] = true;
 
-  if (e.key === ' ' && gameState.running && !gameState.paused) {
+  if (e.key === ' ') {
     e.preventDefault();
-    shoot();
   }
 
   if (e.key === 'Escape' && gameState.running) {
@@ -500,9 +499,13 @@ function gameLoop(currentTime) {
       updatePowerupDisplay();
     }
 
-    // Shoot missiles if missile powerup is active
-    if (gameState.powerup === 'missile' && (keys[' '] || keys['Space'])) {
-      shootMissile();
+    // Continuous shooting when spacebar is held
+    if (keys[' '] && gameState.running && !gameState.paused) {
+      if (gameState.powerup === 'missile') {
+        shootMissile();
+      } else {
+        shoot();
+      }
     }
 
     // Clear canvas
