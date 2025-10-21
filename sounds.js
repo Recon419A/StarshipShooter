@@ -56,9 +56,26 @@ function playNoise(duration, volume = 0.3) {
 
 // Sound Effects
 const sounds = {
-  // Basic shoot sound
+  // Basic shoot sound - classic "pew" with descending pitch
   shoot: function() {
-    playTone(400, 0.1, 'square', 0.15);
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'square';
+
+    const now = audioContext.currentTime;
+    // Quick descending sweep for "pew" effect
+    oscillator.frequency.setValueAtTime(800, now);
+    oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+
+    gainNode.gain.setValueAtTime(0.15, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.08);
   },
 
   // Shotgun spread shot
