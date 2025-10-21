@@ -126,3 +126,82 @@ button:active {
   color: #ffff00;
   text-shadow: 0 0 5px rgba(255, 255, 0, 0.7);
 }
+
+#shop-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 50, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #00ff00;
+  z-index: 100;
+  padding: 20px;
+}
+
+#shop-screen h1 {
+  font-size: 42px;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+}
+
+.shop-scrap {
+  font-size: 20px;
+  color: #ffff00;
+  margin-bottom: 20px;
+  text-shadow: 0 0 5px rgba(255, 255, 0, 0.7);
+}
+
+.shop-items {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.shop-item {
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #00ff00;
+  padding: 20px;
+  width: 220px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.shop-item h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #00ffff;
+}
+
+.shop-item p {
+  font-size: 14px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.shop-item button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.shop-item button:disabled {
+  background: #555;
+  border-color: #888;
+  color: #aaa;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.shop-item button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+#close-shop {
+  margin-top: 10px;
+}

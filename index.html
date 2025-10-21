@@ -10,7 +10,10 @@
   <div id="game-container">
     <div id="ui-overlay">
       <div id="score-display">Score: <span id="score">0</span></div>
-      <div id="health-display">Health: <span id="health">3</span></div>
+      <div id="health-display">Health: <span id="health">5</span></div>
+      <div id="shield-display">Shields: <span id="shields">0</span></div>
+      <div id="scrap-display">Scrap: <span id="scrap">0</span></div>
+      <div id="tier-display">Weapon Tier: <span id="weapon-tier">1</span></div>
       <div id="powerup-display"></div>
     </div>
     <canvas id="game-canvas" width="800" height="600"></canvas>
@@ -28,6 +31,31 @@
         <p>ESC - Pause</p>
       </div>
       <button id="start-button">Start Game</button>
+    </div>
+    <div id="shop-screen" class="hidden">
+      <h1>UPGRADE SHOP</h1>
+      <p class="shop-scrap">Available Scrap: <span id="shop-scrap">0</span></p>
+      <div class="shop-items">
+        <div class="shop-item">
+          <h3>Weapon Tier Upgrade</h3>
+          <p>Increase firepower (Tier <span id="current-tier">1</span>)</p>
+          <p>Cost: <span id="tier-cost">50</span> scrap</p>
+          <button id="buy-tier">Upgrade</button>
+        </div>
+        <div class="shop-item">
+          <h3>Shield Capacity</h3>
+          <p>Add +2 max shields (Current: <span id="current-shields">0</span>)</p>
+          <p>Cost: <span id="shield-cost">75</span> scrap</p>
+          <button id="buy-shield">Buy Shields</button>
+        </div>
+        <div class="shop-item">
+          <h3>CIWS Defense System</h3>
+          <p id="ciws-desc">Auto-defense against enemy bullets</p>
+          <p>Cost: <span id="ciws-cost">100</span> scrap</p>
+          <button id="buy-ciws">Buy CIWS</button>
+        </div>
+      </div>
+      <button id="close-shop">Continue Fighting</button>
     </div>
   </div>
   <audio id="bgm" loop>
